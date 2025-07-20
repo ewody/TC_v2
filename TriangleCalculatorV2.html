@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>Triangle Rectangle – Calculateur Pro</title>
+<style>
+:root{--accent:#00C2FF;--bg:#111;--panel:#1c1c1c;--input:#252525;--text:#f5f5f5;}
+*{margin:0;padding:0;font-family:Inter,Arial,sans-serif;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+.card{background:var(--panel);width:100%;max-width:480px;border-radius:14px;padding:28px 32px;box-shadow:0 20px 40px rgba(0,0,0,.55);}
+.card h1{text-align:center;font-size:22px;margin-bottom:20px;}
+.svg-box{display:flex;justify-content:center;margin-bottom:24px;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.group h2{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:8px;}
+label{font-size:13px;color:#aaa;margin-bottom:4px;display:block;}
+input{width:100%;padding:9px 11px;border:none;border-radius:7px;background:var(--input);color:var(--text);font-size:14px;}
+.btn-row{display:flex;gap:10px;margin-top:26px;}
+button{flex:1;padding:11px;border:none;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;}
+.calc{background:var(--accent);color:#000;}
+.clear{background:transparent;border:1px solid #ff4757;color:#ff4757;}
+.clear:hover{background:#ff4757;color:#fff;}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Triangle Rectangle – Calculateur Pro</h1>
+
+  <!-- Triangle interactif -->
+  <div class="svg-box">
+    <svg id="svg" width="260" height="170" viewBox="0 0 260 170">
+      <polygon id="poly" points="20,150 240,150 20,20" fill="#00C2FF" fill-opacity=".15" stroke="#00C2FF" stroke-width="2"/>
+      <!-- Étiquettes côtés (minuscules) -->
+      <text id="labelA" font-size="17" fill="#fff" font-weight="600">a</text>
+      <text id="labelB" font-size="17" fill="#fff" font-weight="600">b</text>
+      <text id="labelC" font-size="17" fill="#fff" font-weight="600">c</text>
+      <!-- Étiquettes sommets (majuscules) -->
+      <text id="lblA" font-size="15" fill="#fff">A</text>
+      <text id="lblB" font-size="15" fill="#fff">B</text>
+      <text id="lblC" font-size="15" fill="#fff">C</text>
+      <!-- Angle droit -->
+      <path id="angleRight" stroke="#fff" stroke-width="1.5" fill="none"/>
+    </svg>
+  </div>
+
+  <form id="triangleForm">
+    <div class="grid">
+      <div>
+        <div class="group">
+          <h2>Côtés</h2>
+          <label>a (hypoténuse)</label>
+          <input type="number" id="coteA" oninput="update()" min="0" step="any" placeholder="0.00">
+          <label>b</label>
+          <input type="number" id="coteB" oninput="update()" min="0" step="any" placeholder="0.00">
+          <label>c</label>
+          <input type="number" id="coteC" oninput="update()" min="0" step="any" placeholder="0.00">
+        </div>
+      </div>
+      <div>
+        <div class="group">
+          <h2>Angles</h2>
+          <label>Angle B (°)</label>
+          <input type="number" id="angleB" oninput="update()" min="0" max="90" step="any" placeholder="0.00">
+          <label>Angle C (°)</label>
+          <input type="number" id="angleC" oninput="update()" min="0" max="90" step="any" placeholder="0.00">
+          <label>Altitude depuis A</label>
+          <input type="number" id="altitude" readonly placeholder="0.00">
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button type="button" class="calc" onclick="calculate()">Calculer</button>
+      <button type="button" class="clear" onclick="clearForm()">Effacer</button>
+    </div>
+  </form>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const val = id => parseFloat($(id).value) || 0;
+
+/* Mise à jour visuelle complète */
+function update(){
+  const b = val('coteB') || 100; // défaut
+  const c = val('coteC') || 100;
+  const scale = 120 / Math.max(b, c, 1);
+
+  /* Points */
+  const xB = 20, yB = 150;           // angle droit
+  const xC = 20, yC = 150 - b * scale;
+  const xA = 20 + c * scale, yA = 150;
+
+  document.getElementById('poly').setAttribute('points', `${xA},${yA} ${xB},${yB} ${xC},${yC}`);
+
+  /* Étiquettes côtés */
+  document.getElementById('labelA').setAttribute('x', (xA + xC) / 2 - 5);
+  document.getElementById('labelA').setAttribute('y', (yA + yC) / 2 - 5);
+
+  document.getElementById('labelB').setAttribute('x', xB - 12);
+  document.getElementById('labelB').setAttribute('y', (yB + yC) / 2);
+
+  document.getElementById('labelC').setAttribute('x', (xA + xB) / 2);
+  document.getElementById('labelC').setAttribute('y', yA + 15);
+
+  /* Étiquettes sommets */
+  document.getElementById('lblB').setAttribute('x', xA + 5);
+  document.getElementById('lblB').setAttribute('y', yA + 15);
+
+  document.getElementById('lblA').setAttribute('x', xB - 15);
+  document.getElementById('lblA').setAttribute('y', yB + 5);
+
+  document.getElementById('lblC').setAttribute('x', xC - 15);
+  document.getElementById('lblC').setAttribute('y', yC - 5);
+
+  /* Angle droit */
+  document.getElementById('angleRight').setAttribute('d',
+    `M${xB + 10} ${yB} L${xB + 10} ${yB - 10} L${xB} ${yB - 10}`);
+}
+
+/* Calcul complet */
+function calculate(){
+  let a = val('coteA'), b = val('coteB'), c = val('coteC');
+  let B = val('angleB'), C = val('angleC');
+
+  if(b && c){
+    a = Math.hypot(b, c);
+    B = Math.atan2(b, c) * 180 / Math.PI;
+    C = 90 - B;
+  }else if(a && b){
+    if(b >= a) return alert('Erreur : b ≥ a');
+    c = Math.sqrt(a*a - b*b);
+    B = Math.asin(b / a) * 180 / Math.PI;
+    C = 90 - B;
+  }else if(a && c){
+    if(c >= a) return alert('Erreur : c ≥ a');
+    b = Math.sqrt(a*a - c*c);
+    C = Math.asin(c / a) * 180 / Math.PI;
+    B = 90 - C;
+  }else if(a && B){
+    b = a * Math.sin(B * Math.PI / 180);
+    c = a * Math.cos(B * Math.PI / 180);
+    C = 90 - B;
+  }else if(a && C){
+    c = a * Math.sin(C * Math.PI / 180);
+    b = a * Math.cos(C * Math.PI / 180);
+    B = 90 - C;
+  }else if(b && B){
+    a = b / Math.sin(B * Math.PI / 180);
+    c = Math.sqrt(a*a - b*b);
+    C = 90 - B;
+  }else if(c && C){
+    a = c / Math.sin(C * Math.PI / 180);
+    b = Math.sqrt(a*a - c*c);
+    B = 90 - C;
+  }else{
+    return alert('Saisissez 2 valeurs compatibles.');
+  }
+
+  ['coteA','coteB','coteC','angleB','angleC']
+    .forEach((id,i)=> $(id).value = [a,b,c,B,C][i].toFixed(2));
+  $('altitude').value = ((b * c) / a).toFixed(2);
+  update();
+}
+
+function clearForm(){
+  $('triangleForm').reset();
+  $('altitude').value = '';
+  update();
+}
+
+/* Initialisation */
+update();
+</script>
+</body>
+</html>
